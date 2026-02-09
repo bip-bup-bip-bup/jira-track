@@ -30,7 +30,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bip-bup-bip-bup/jt"
+    "url": "https://github.com/bip-bup-bip-bup/jira-track"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",
