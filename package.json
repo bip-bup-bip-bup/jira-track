@@ -1,6 +1,6 @@
 {
   "name": "jira-track",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "AI-powered Jira time logging CLI - Minimalist rebuild",
   "main": "dist/index.js",
   "bin": {
