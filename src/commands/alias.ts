@@ -29,7 +29,7 @@ export async function aliasCommand(): Promise<void> {
 async function createAlias(): Promise<void> {
   const config = store.getConfig();
   if (!config) {
-    displayError('Конфигурация не найдена. Запустите: jt setup');
+    displayError('Конфигурация не найдена. Запустите: jtw setup');
     process.exit(1);
   }
 

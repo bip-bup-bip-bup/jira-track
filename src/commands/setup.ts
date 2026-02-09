@@ -105,9 +105,9 @@ export async function setupCommand(): Promise<void> {
 
     console.log("\n✓ Настройка завершена!\n");
     console.log("Теперь можно использовать:");
-    console.log("  jt        - интерактивный режим");
-    console.log('  jt q "текст" - быстрый лог через AI');
-    console.log("  jt t      - работа с templates\n");
+    console.log("  jtw       - интерактивный режим");
+    console.log('  jtwq "текст" - быстрый лог через AI');
+    console.log("  jtwt      - работа с templates\n");
   } catch (error) {
     handleError(error);
   }

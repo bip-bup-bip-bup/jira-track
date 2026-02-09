@@ -10,7 +10,7 @@ export async function quickCommand(input: string): Promise<void> {
     const config = store.getConfig();
     if (!config) {
       displayError('Конфигурация не найдена');
-      console.error('Запустите: jt setup\n');
+      console.error('Запустите: jtw setup\n');
       process.exit(1);
     }
 
@@ -18,8 +18,8 @@ export async function quickCommand(input: string): Promise<void> {
     if (input.split(' ').length < 3) {
       displayWarning('Ваш ввод выглядит слишком коротким.');
       console.warn('Не забывайте использовать кавычки:');
-      console.warn('  Правильно: jt q "вчера созвоны 4 часа"');
-      console.warn('  Неправильно: jt q вчера созвоны 4 часа\n');
+      console.warn('  Правильно: jtw q "вчера созвоны 4 часа"');
+      console.warn('  Неправильно: jtw q вчера созвоны 4 часа\n');
     }
 
     // Initialize clients

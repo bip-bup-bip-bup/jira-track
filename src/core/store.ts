@@ -4,7 +4,7 @@ import { join } from "path";
 import { mkdirSync, existsSync, chmodSync } from "fs";
 import { Config, Alias, Template, HistoryEntry, WorklogEntry } from "../types";
 
-const DB_DIR = join(homedir(), ".jt");
+const DB_DIR = join(homedir(), ".jtw");
 const DB_PATH = join(DB_DIR, "data.db");
 
 // Raw SQLite row types

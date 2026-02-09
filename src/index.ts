@@ -12,9 +12,9 @@ import inquirer from "inquirer";
 const program = new Command();
 
 program
-  .name("jt")
+  .name("jtw")
   .description("AI-powered Jira time logging CLI")
-  .version("2.0.0");
+  .version("1.0.0");
 
 // Setup command
 program
@@ -69,12 +69,12 @@ program.action(async () => {
     if (proceed) {
       await setupCommand();
       console.log("\n✓ Готово! Теперь используйте:\n");
-      console.log("  jt        - интерактивный режим");
-      console.log('  jt q "текст" - быстрый AI лог');
-      console.log("  jt t      - templates");
-      console.log("  jt a      - aliases\n");
+      console.log("  jtw        - интерактивный режим");
+      console.log('  jtw q "текст" - быстрый AI лог');
+      console.log("  jtw t      - templates");
+      console.log("  jtw a      - aliases\n");
     } else {
-      console.log("\nЗапустите позже: jt setup\n");
+      console.log("\nЗапустите позже: jtw setup\n");
     }
     return;
   }

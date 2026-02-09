@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with this repository.
 
 ## Project Overview
 
-**jt** is an AI-powered Jira time logging CLI (v2 - minimalist rebuild). Uses Claude or GPT to parse natural language worklog entries and post to Jira Server.
+**jtw** is an AI-powered Jira time logging CLI (v2 - minimalist rebuild). Uses Claude or GPT to parse natural language worklog entries and post to Jira Server.
 
 ## Build & Development
 
@@ -31,7 +31,7 @@ src/
 
 - **src/core/store.ts** - SQLite storage (~80 lines)
   - Config, aliases, templates, history
-  - Single file: `~/.jt/data.db`
+  - Single file: `~/.jtw/data.db`
 
 - **src/core/jira.ts** - Jira API client (~100 lines)
   - Uses jira.js Version2Client
@@ -44,9 +44,9 @@ src/
 
 - **src/commands/** - Individual commands
   - setup.ts - Interactive configuration wizard
-  - quick.ts - Fast AI logging (jt q)
-  - template.ts - Template management (jt t)
-  - alias.ts - Alias management (jt a)
+  - quick.ts - Fast AI logging (jtw q)
+  - template.ts - Template management (jtw t)
+  - alias.ts - Alias management (jtw a)
   - log.ts - Interactive menu (jt)
 
 - **src/utils/menu.ts** - Unified menu helpers
@@ -63,15 +63,15 @@ Manual testing only (no automated tests yet):
 ```bash
 npm run build
 npm link
-jt setup          # Configure
-jt q "test input" # Test AI parsing
-jt a              # Test aliases
-jt t              # Test templates
+jtw setup          # Configure
+jtw q "test input" # Test AI parsing
+jtw a              # Test aliases
+jtw t              # Test templates
 ```
 
-Test database: `~/.jt/data.db`
+Test database: `~/.jtw/data.db`
 
-Inspect: `sqlite3 ~/.jt/data.db "SELECT * FROM config;"`
+Inspect: `sqlite3 ~/.jtw/data.db "SELECT * FROM config;"`
 
 ## Code Style
 
@@ -96,12 +96,12 @@ Core:
 2. **Storage:** All config in SQLite, no JSON files
 3. **AI Prompt:** Supports semantic alias matching (see src/core/ai.ts)
 4. **Date Format:** Russian format in display (2 фев 2026)
-5. **Commands:** Short name `jt` instead of `jira-track`
+5. **Commands:** Short name `jtw` instead of `jira-track`
 
 ## Breaking Changes from v1
 
-- Command name: `jira-track` → `jt`
-- Config: `~/.jira-track/config.json` → `~/.jt/data.db`
+- Command name: `jira-track` → `jtw`
+- Config: `~/.jira-track/config.json` → `~/.jtw/data.db`
 - Aliases: New semantic matching via AI
 - Removed: --file option (may add back later)
 

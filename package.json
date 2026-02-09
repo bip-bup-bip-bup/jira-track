@@ -1,10 +1,10 @@
 {
-  "name": "jira-track",
+  "name": "jtw",
   "version": "1.0.0",
   "description": "AI-powered Jira time logging CLI - Minimalist rebuild",
   "main": "dist/index.js",
   "bin": {
-    "jt": "dist/index.js"
+    "jtw": "dist/index.js"
   },
   "files": [
     "dist",

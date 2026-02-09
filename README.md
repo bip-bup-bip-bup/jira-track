@@ -7,26 +7,26 @@ AI-powered Jira time logging CLI. Write in natural language -- get structured wo
 ## Installation
 
 ```bash
-npm install -g jira-track
+npm install -g jtw
 ```
 
 ## Quick Start
 
 ```bash
 # First-time setup
-jt setup
+jtw setup
 
 # Quick AI logging
-jt q "yesterday standups 4 hours, PROJ-123 development 3h"
+jtw q "yesterday standups 4 hours, PROJ-123 development 3h"
 
 # Interactive mode
 jt
 
 # Manage templates
-jt t
+jtw t
 
 # Manage aliases
-jt a
+jtw a
 ```
 
 ## Features
@@ -42,15 +42,15 @@ jt a
 
 | Command | Description |
 |---------|-------------|
-| `jt` | Interactive menu |
-| `jt setup` | Configure Jira and AI credentials |
-| `jt q "text"` | Quick AI log |
-| `jt t` | Template management |
-| `jt a` | Alias management |
+| `jtw` | Interactive menu |
+| `jtw setup` | Configure Jira and AI credentials |
+| `jtw q "text"` | Quick AI log |
+| `jtw t` | Template management |
+| `jtw a` | Alias management |
 
 ## Configuration
 
-All settings stored in `~/.jt/data.db` (SQLite). Run `jt setup` to configure:
+All settings stored in `~/.jtw/data.db` (SQLite). Run `jtw setup` to configure:
 
 - Jira URL, username, password
 - Project key (e.g., PROJ)
@@ -60,20 +60,20 @@ All settings stored in `~/.jt/data.db` (SQLite). Run `jt setup` to configure:
 
 ```bash
 # Simple log
-jt q "today standup 30 minutes"
+jtw q "today standup 30 minutes"
 
 # Multiple entries at once
-jt q "yesterday PROJ-123 development 6 hours, review 2 hours"
+jtw q "yesterday PROJ-123 development 6 hours, review 2 hours"
 
 # AI matches aliases by meaning
 # "standups" -> PROJ-123 (if alias exists)
-jt q "today standups 2 hours"
+jtw q "today standups 2 hours"
 
 # Periods -- expands to workdays
-jt q "last week standups 1.5h each day"
+jtw q "last week standups 1.5h each day"
 
 # Relative dates
-jt q "day before yesterday bugfix 4h"
+jtw q "day before yesterday bugfix 4h"
 ```
 
 ## Requirements
@@ -91,7 +91,7 @@ The package includes a native dependency. Prebuilt binaries are downloaded autom
 - Windows: `npm install -g windows-build-tools`
 
 **Can't connect to Jira:**
-Check VPN, URL, and credentials: `jt setup`
+Check VPN, URL, and credentials: `jtw setup`
 
 **AI API error:**
 Check your API key and account balance.

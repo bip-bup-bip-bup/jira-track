@@ -61,7 +61,7 @@ export function handleError(error: unknown): never {
       displayError('Не могу подключиться к Jira');
       console.error('Проверьте:');
       console.error('  1. VPN подключен');
-      console.error('  2. URL правильный: jt setup');
+      console.error('  2. URL правильный: jtw setup');
       console.error('');
       process.exit(1);
     }
@@ -69,7 +69,7 @@ export function handleError(error: unknown): never {
     // Auth errors
     if (error.message.includes('401') || error.message.includes('credentials') || error.message.includes('Invalid credentials')) {
       displayError('Неверный логин или пароль');
-      console.error('Исправить: jt setup\n');
+      console.error('Исправить: jtw setup\n');
       process.exit(1);
     }
 
@@ -80,7 +80,7 @@ export function handleError(error: unknown): never {
       console.error('  Anthropic: https://console.anthropic.com/');
       console.error('  OpenAI: https://platform.openai.com/api-keys');
       console.error('');
-      console.error('Настроить: jt setup\n');
+      console.error('Настроить: jtw setup\n');
       process.exit(1);
     }
 
@@ -88,7 +88,7 @@ export function handleError(error: unknown): never {
     if (error.message.includes('rate limit') || error.message.includes('429')) {
       displayError('Превышен лимит запросов к AI');
       console.error('Попробуйте через минуту или используйте template:');
-      console.error('  jt t\n');
+      console.error('  jtw t\n');
       process.exit(1);
     }
 
@@ -102,7 +102,7 @@ export function handleError(error: unknown): never {
     // Config not found
     if (error.message.includes('config') || error.message.includes('SQLITE_CANTOPEN')) {
       displayError('Конфигурация не найдена');
-      console.error('Запустите настройку: jt setup\n');
+      console.error('Запустите настройку: jtw setup\n');
       process.exit(1);
     }
 
@@ -115,7 +115,7 @@ export function handleError(error: unknown): never {
   console.error('Если проблема повторяется:');
   console.error('  - Проверьте VPN');
   console.error('  - Откройте Jira в браузере');
-  console.error('  - Проверьте настройки: jt setup\n');
+  console.error('  - Проверьте настройки: jtw setup\n');
 
   process.exit(1);
 }
