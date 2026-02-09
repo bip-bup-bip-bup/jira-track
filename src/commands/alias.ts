@@ -3,20 +3,21 @@ import { store } from '../core/store';
 import { Alias } from '../types';
 import { handleError, displayError } from '../utils/display';
 import { runMenu, MenuItem } from '../utils/menu';
+import { t } from '../i18n';
 
 export async function aliasCommand(): Promise<void> {
   try {
     const aliases = store.getAliases();
 
     const items: MenuItem<Alias>[] = aliases.map((a) => ({
-      label: `${a.keyword} → ${a.task}${a.description ? ` (${a.description})` : ''}`,
+      label: `${a.keyword} -> ${a.task}${a.description ? ` (${a.description})` : ''}`,
       value: a,
     }));
 
     await runMenu({
       title: 'Aliases',
       items,
-      emptyMessage: 'Нет aliases. Создадим первый.',
+      emptyMessage: t('alias.noAliases'),
       createFn: () => createAlias(),
       editFn: (a) => editAlias(a),
       deleteFn: (a) => deleteAlias(a),
@@ -29,13 +30,13 @@ export async function aliasCommand(): Promise<void> {
 async function createAlias(): Promise<void> {
   const config = store.getConfig();
   if (!config) {
-    displayError('Конфигурация не найдена. Запустите: jtw setup');
+    displayError(t('alias.noConfig'));
     process.exit(1);
   }
 
   const answers = await collectAliasFields();
   store.saveAlias(answers.keyword, answers.task, answers.description);
-  console.log(`\n✓ Alias сохранён: "${answers.keyword}" → ${answers.task}\n`);
+  console.log(`\n\u2713 ${t('alias.saved')} "${answers.keyword}" -> ${answers.task}\n`);
 }
 
 async function editAlias(alias: Alias): Promise<void> {
@@ -45,7 +46,7 @@ async function editAlias(alias: Alias): Promise<void> {
     store.deleteAlias(alias.keyword);
   }
   store.saveAlias(answers.keyword, answers.task, answers.description);
-  console.log(`\n✓ Alias обновлён: "${answers.keyword}" → ${answers.task}\n`);
+  console.log(`\n\u2713 ${t('alias.updated')} "${answers.keyword}" -> ${answers.task}\n`);
 }
 
 async function deleteAlias(alias: Alias): Promise<void> {
@@ -53,14 +54,14 @@ async function deleteAlias(alias: Alias): Promise<void> {
     {
       type: 'confirm',
       name: 'confirm',
-      message: `Удалить alias "${alias.keyword}"?`,
+      message: `${t('alias.deleteConfirm')} "${alias.keyword}"?`,
       default: false,
     },
   ]);
 
   if (confirm) {
     store.deleteAlias(alias.keyword);
-    console.log(`\n✓ Alias "${alias.keyword}" удалён\n`);
+    console.log(`\n\u2713 ${t('alias.deleted')} "${alias.keyword}"\n`);
   }
 }
 
@@ -69,24 +70,24 @@ async function collectAliasFields(defaults?: Alias): Promise<{ keyword: string; 
     {
       type: 'input',
       name: 'keyword',
-      message: 'Keyword (например, "созвоны"):',
+      message: t('alias.keyword'),
       default: defaults?.keyword,
-      validate: (input: string) => input.length > 0 || 'Введите keyword',
+      validate: (input: string) => input.length > 0 || t('alias.enterKeyword'),
     },
     {
       type: 'input',
       name: 'task',
-      message: 'Task key:',
+      message: t('alias.taskKey'),
       default: defaults?.task,
       validate: (input: string) => {
-        if (!input.match(/^[A-Z]+-\d+$/)) return 'Формат: PROJ-123';
+        if (!input.match(/^[A-Z]+-\d+$/)) return t('quick.taskFormat');
         return true;
       },
     },
     {
       type: 'input',
       name: 'description',
-      message: 'Описание (опционально):',
+      message: t('alias.description'),
       default: defaults?.description || '',
     },
   ]);

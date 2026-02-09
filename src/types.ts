@@ -1,3 +1,5 @@
+import type { Lang } from './i18n';
+
 // Core domain types
 export interface WorklogEntry {
   task: string | null;
@@ -34,6 +36,7 @@ export interface Config {
   aiProvider: 'anthropic' | 'openai';
   aiApiKey: string;
   aiModel?: string;
+  language?: Lang;
   createdAt?: string;
   updatedAt?: string;
 }

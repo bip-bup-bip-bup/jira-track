@@ -1,4 +1,5 @@
 import inquirer from 'inquirer';
+import { t } from '../i18n';
 
 export interface MenuItem<T> {
   label: string;
@@ -29,7 +30,7 @@ export async function runMenu<T>(config: MenuConfig<T>): Promise<void> {
       value: String(i),
     })),
     new inquirer.Separator(),
-    { name: '+ Создать новый', value: CREATE_SENTINEL },
+    { name: t('menu.createNew'), value: CREATE_SENTINEL },
   ];
 
   const { selected } = await inquirer.prompt([
@@ -54,9 +55,9 @@ export async function runMenu<T>(config: MenuConfig<T>): Promise<void> {
       name: 'action',
       message: item.label,
       choices: [
-        { name: 'Редактировать', value: 'edit' },
-        { name: 'Удалить', value: 'delete' },
-        { name: '<- Назад', value: 'back' },
+        { name: t('menu.edit'), value: 'edit' },
+        { name: t('menu.delete'), value: 'delete' },
+        { name: t('menu.back'), value: 'back' },
       ],
     },
   ]);

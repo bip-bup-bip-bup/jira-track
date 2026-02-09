@@ -17,6 +17,7 @@ interface ConfigRow {
   ai_provider: 'anthropic' | 'openai';
   ai_api_key: string;
   ai_model: string | null;
+  language: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -103,6 +104,15 @@ class Store {
       CREATE INDEX IF NOT EXISTS idx_history_date ON history(date);
       CREATE INDEX IF NOT EXISTS idx_history_task ON history(task);
     `);
+
+    // Migration: add language column if missing
+    const columns = this.db
+      .prepare("PRAGMA table_info(config)")
+      .all() as Array<{ name: string }>;
+    const hasLanguage = columns.some((col) => col.name === "language");
+    if (!hasLanguage) {
+      this.db.exec("ALTER TABLE config ADD COLUMN language TEXT DEFAULT 'ru'");
+    }
   }
 
   // Config methods
@@ -120,6 +130,7 @@ class Store {
       aiProvider: row.ai_provider,
       aiApiKey: row.ai_api_key,
       aiModel: row.ai_model ?? undefined,
+      language: (row.language as Config['language']) ?? 'ru',
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -131,9 +142,9 @@ class Store {
         `
       INSERT OR REPLACE INTO config (
         id, jira_url, jira_username, jira_password, project_key,
-        ai_provider, ai_api_key, ai_model, updated_at
+        ai_provider, ai_api_key, ai_model, language, updated_at
       )
-      VALUES (1, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     `,
       )
       .run(
@@ -144,6 +155,7 @@ class Store {
         config.aiProvider,
         config.aiApiKey,
         config.aiModel || null,
+        config.language || 'ru',
       );
   }
 
@@ -153,13 +165,6 @@ class Store {
       .prepare("SELECT * FROM aliases ORDER BY usage_count DESC")
       .all() as AliasRow[];
     return rows.map(mapAliasRow);
-  }
-
-  findAlias(keyword: string): Alias | null {
-    const row = this.db
-      .prepare("SELECT * FROM aliases WHERE keyword = ?")
-      .get(keyword) as AliasRow | undefined;
-    return row ? mapAliasRow(row) : null;
   }
 
   saveAlias(keyword: string, task: string, description?: string): void {
@@ -183,31 +188,12 @@ class Store {
     return result.changes > 0;
   }
 
-  incrementAliasUsage(keyword: string): void {
-    this.db
-      .prepare(
-        `
-      UPDATE aliases
-      SET usage_count = usage_count + 1, last_used_at = CURRENT_TIMESTAMP
-      WHERE keyword = ?
-    `,
-      )
-      .run(keyword);
-  }
-
   // Template methods
   getTemplates(): Template[] {
     const rows = this.db
       .prepare("SELECT * FROM templates ORDER BY usage_count DESC")
       .all() as TemplateRow[];
     return rows.map(mapTemplateRow);
-  }
-
-  getTemplate(name: string): Template | null {
-    const row = this.db
-      .prepare("SELECT * FROM templates WHERE name = ?")
-      .get(name) as TemplateRow | undefined;
-    return row ? mapTemplateRow(row) : null;
   }
 
   saveTemplate(name: string, entries: WorklogEntry[]): void {
@@ -227,18 +213,6 @@ class Store {
       .prepare("DELETE FROM templates WHERE name = ?")
       .run(name);
     return result.changes > 0;
-  }
-
-  incrementTemplateUsage(name: string): void {
-    this.db
-      .prepare(
-        `
-      UPDATE templates
-      SET usage_count = usage_count + 1, last_used_at = CURRENT_TIMESTAMP
-      WHERE name = ?
-    `,
-      )
-      .run(name);
   }
 
   // History methods
@@ -276,9 +250,6 @@ class Store {
     return rows.map((row) => row.task);
   }
 
-  close(): void {
-    this.db.close();
-  }
 }
 
 function mapAliasRow(row: AliasRow): Alias {

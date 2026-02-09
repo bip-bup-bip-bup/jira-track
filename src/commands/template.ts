@@ -3,23 +3,24 @@ import { store } from "../core/store";
 import { WorklogEntry, Template } from "../types";
 import { handleError, displayError } from "../utils/display";
 import { runMenu, MenuItem } from "../utils/menu";
+import { t } from "../i18n";
 
 export async function templateCommand(): Promise<void> {
   try {
     const templates = store.getTemplates();
 
-    const items: MenuItem<Template>[] = templates.map((t) => ({
-      label: `${t.name} — ${t.entries.length} ${t.entries.length === 1 ? "запись" : "записей"}, ${t.entries.reduce((s, e) => s + e.hours, 0)}ч`,
-      value: t,
+    const items: MenuItem<Template>[] = templates.map((tmpl) => ({
+      label: `${tmpl.name} -- ${tmpl.entries.length} ${tmpl.entries.length === 1 ? t('template.entry') : t('template.entries')}, ${tmpl.entries.reduce((s, e) => s + e.hours, 0)}h`,
+      value: tmpl,
     }));
 
     await runMenu({
       title: "Templates",
       items,
-      emptyMessage: "Нет templates. Создадим первый.",
+      emptyMessage: t('template.noTemplates'),
       createFn: () => createTemplate(),
-      editFn: (t) => editTemplate(t),
-      deleteFn: (t) => deleteTemplate(t),
+      editFn: (tmpl) => editTemplate(tmpl),
+      deleteFn: (tmpl) => deleteTemplate(tmpl),
     });
   } catch (error) {
     handleError(error);
@@ -29,7 +30,7 @@ export async function templateCommand(): Promise<void> {
 async function createTemplate(): Promise<void> {
   const config = store.getConfig();
   if (!config) {
-    displayError("Конфигурация не найдена. Запустите: jtw setup");
+    displayError(t('template.noConfig'));
     process.exit(1);
   }
 
@@ -37,14 +38,14 @@ async function createTemplate(): Promise<void> {
     {
       type: "input",
       name: "name",
-      message: "Название template:",
-      validate: (input: string) => input.length > 0 || "Введите название",
+      message: t('template.namePrompt'),
+      validate: (input: string) => input.length > 0 || t('template.enterName'),
     },
   ]);
 
   const entries = await collectEntries();
   store.saveTemplate(name, entries);
-  console.log(`\n✓ Template "${name}" создан с ${entries.length} записями\n`);
+  console.log(`\n\u2713 Template "${name}" ${t('template.created')} ${entries.length} ${t('template.createdSuffix')}\n`);
 }
 
 async function editTemplate(template: Template): Promise<void> {
@@ -52,7 +53,7 @@ async function editTemplate(template: Template): Promise<void> {
     {
       type: "input",
       name: "name",
-      message: "Название template:",
+      message: t('template.nameEditPrompt'),
       default: template.name,
     },
   ]);
@@ -63,7 +64,7 @@ async function editTemplate(template: Template): Promise<void> {
     store.deleteTemplate(template.name);
   }
   store.saveTemplate(name, entries);
-  console.log(`\n✓ Template "${name}" обновлён\n`);
+  console.log(`\n\u2713 ${t('template.updated')} "${name}"\n`);
 }
 
 async function deleteTemplate(template: Template): Promise<void> {
@@ -71,14 +72,14 @@ async function deleteTemplate(template: Template): Promise<void> {
     {
       type: "confirm",
       name: "confirm",
-      message: `Удалить template "${template.name}"?`,
+      message: `${t('template.deleteConfirm')} "${template.name}"?`,
       default: false,
     },
   ]);
 
   if (confirm) {
     store.deleteTemplate(template.name);
-    console.log(`\n✓ Template "${template.name}" удалён\n`);
+    console.log(`\n\u2713 ${t('template.deleted')} "${template.name}"\n`);
   }
 }
 
@@ -91,33 +92,33 @@ async function collectEntries(
 
   while (addMore) {
     const current = defaults[index];
-    console.log(`\nEntry ${index + 1}:`);
+    console.log(`\n${t('template.entryLabel')} ${index + 1}:`);
 
     const entry = await inquirer.prompt([
       {
         type: "input",
         name: "task",
-        message: "Task key:",
+        message: t('template.taskKey'),
         default: current?.task,
         validate: (input: string) => {
-          if (!input.match(/^[A-Z]+-\d+$/)) return "Формат: PROJ-123";
+          if (!input.match(/^[A-Z]+-\d+$/)) return t('quick.taskFormat');
           return true;
         },
       },
       {
         type: "input",
         name: "activity",
-        message: "Описание работы:",
+        message: t('template.activity'),
         default: current?.activity,
-        validate: (input: string) => input.length > 0 || "Введите описание",
+        validate: (input: string) => input.length > 0 || t('template.enterActivity'),
       },
       {
         type: "number",
         name: "hours",
-        message: "Часов:",
+        message: t('template.hours'),
         default: current?.hours,
         validate: (input: number) => {
-          if (input <= 0 || input > 24) return "Введите число от 0 до 24";
+          if (input <= 0 || input > 24) return t('template.hoursValidation');
           return true;
         },
       },
@@ -136,7 +137,7 @@ async function collectEntries(
       {
         type: "confirm",
         name: "more",
-        message: "Добавить ещё одну запись?",
+        message: t('template.addMore'),
         default: index < defaults.length,
       },
     ]);

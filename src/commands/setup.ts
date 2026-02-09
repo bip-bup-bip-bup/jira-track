@@ -2,52 +2,69 @@ import inquirer from "inquirer";
 import { store } from "../core/store";
 import { createJiraClient } from "../core/jira";
 import { handleError, displayError } from "../utils/display";
+import { t, setLang, Lang } from "../i18n";
 
 export async function setupCommand(): Promise<void> {
   try {
-    console.log("\n🔧 Настройка JT\n");
+    // Language selection first
+    const { language } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "language",
+        message: t('setup.language'),
+        choices: [
+          { name: "Русский", value: "ru" },
+          { name: "English", value: "en" },
+        ],
+        default: "ru",
+      },
+    ]);
+
+    setLang(language as Lang);
+
+    console.log(`\n${t('setup.title')}\n`);
 
     const answers = await inquirer.prompt([
       {
         type: "input",
         name: "jiraUrl",
-        message: "Jira URL:",
+        message: t('setup.jiraUrl'),
         default: "https://jira.example.com",
         validate: (input: string) => {
           try {
             const url = new URL(input);
             if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-              return 'URL должен начинаться с http:// или https://';
+              return t('setup.urlProtocolError');
             }
             if (!url.hostname) {
-              return 'URL должен содержать hostname';
+              return t('setup.urlHostnameError');
             }
             return true;
           } catch {
-            return 'Некорректный URL';
+            return t('setup.urlInvalid');
           }
         },
       },
       {
         type: "input",
         name: "jiraUsername",
-        message: "Username:",
-        validate: (input: string) => input.length > 0 || "Введите username",
+        message: t('setup.username'),
+        validate: (input: string) => input.length > 0 || t('setup.enterUsername'),
       },
       {
         type: "password",
         name: "jiraPassword",
-        message: "Password:",
+        message: t('setup.password'),
         mask: "*",
-        validate: (input: string) => input.length > 0 || "Введите password",
+        validate: (input: string) => input.length > 0 || t('setup.enterPassword'),
       },
       {
         type: "input",
         name: "projectKey",
-        message: "Project key (например, PROJ):",
+        message: t('setup.projectKey'),
         validate: (input: string) => {
           if (!input.match(/^[A-Z]+$/)) {
-            return "Project key должен содержать только заглавные буквы";
+            return t('setup.projectKeyError');
           }
           return true;
         },
@@ -56,7 +73,7 @@ export async function setupCommand(): Promise<void> {
       {
         type: "list",
         name: "aiProvider",
-        message: "AI provider:",
+        message: t('setup.aiProvider'),
         choices: [
           { name: "Anthropic (Claude)", value: "anthropic" },
           { name: "OpenAI (GPT)", value: "openai" },
@@ -65,14 +82,14 @@ export async function setupCommand(): Promise<void> {
       {
         type: "password",
         name: "aiApiKey",
-        message: "AI API key:",
+        message: t('setup.aiApiKey'),
         mask: "*",
-        validate: (input: string) => input.length > 0 || "Введите API key",
+        validate: (input: string) => input.length > 0 || t('setup.enterApiKey'),
       },
     ]);
 
     // Test Jira connection
-    console.log("\nПроверка подключения к Jira...");
+    console.log(`\n${t('setup.testingConnection')}`);
     const jiraClient = createJiraClient({
       jiraUrl: answers.jiraUrl,
       jiraUsername: answers.jiraUsername,
@@ -82,14 +99,14 @@ export async function setupCommand(): Promise<void> {
 
     try {
       await jiraClient.testConnection();
-      console.log("✓ Подключение к Jira успешно\n");
+      console.log(`\u2713 ${t('setup.connectionSuccess')}\n`);
     } catch (error: any) {
-      displayError("Не удалось подключиться к Jira");
+      displayError(t('setup.connectionFailed'));
       console.error(error.message);
-      console.error("\nПроверьте:");
-      console.error("  - VPN подключен");
-      console.error("  - URL правильный");
-      console.error("  - Логин и пароль корректны\n");
+      console.error(`\n${t('setup.checkHints')}`);
+      console.error(`  - ${t('setup.connectionCheck1')}`);
+      console.error(`  - ${t('setup.connectionCheck2')}`);
+      console.error(`  - ${t('setup.connectionCheck3')}\n`);
       process.exit(1);
     }
 
@@ -101,13 +118,15 @@ export async function setupCommand(): Promise<void> {
       projectKey: answers.projectKey.toUpperCase(),
       aiProvider: answers.aiProvider,
       aiApiKey: answers.aiApiKey,
+      language,
     });
 
-    console.log("\n✓ Настройка завершена!\n");
-    console.log("Теперь можно использовать:");
-    console.log("  jtw       - интерактивный режим");
-    console.log('  jtwq "текст" - быстрый лог через AI');
-    console.log("  jtwt      - работа с templates\n");
+    console.log(`\n\u2713 ${t('setup.complete')}\n`);
+    console.log(t('setup.usageHint1'));
+    console.log(`  ${t('setup.usageHint2')}`);
+    console.log(`  ${t('setup.usageHint3')}`);
+    console.log(`  ${t('setup.usageHint4')}`);
+    console.log(`  ${t('setup.usageHint5')}\n`);
   } catch (error) {
     handleError(error);
   }

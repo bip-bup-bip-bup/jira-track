@@ -1,6 +1,7 @@
 import { Version2Client } from 'jira.js';
 import { JiraConfig, JiraIssue, ValidationResult, WorklogEntry, BatchResult } from '../types';
 import { displayProgress, displayProgressResult } from '../utils/display';
+import { t } from '../i18n';
 import https from 'https';
 
 export class JiraClient {
@@ -121,7 +122,7 @@ export class JiraClient {
   }
 
   async logBatch(entries: WorklogEntry[]): Promise<BatchResult> {
-    process.stderr.write(`\nЛогирование ${entries.length} записей...\n\n`);
+    process.stderr.write(`\n${t('display.logging', { count: String(entries.length) })}\n\n`);
 
     const results: BatchResult = {
       success: [],

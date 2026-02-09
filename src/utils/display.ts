@@ -1,7 +1,8 @@
 import { WorklogEntry, BatchResult } from '../types';
+import { t } from '../i18n';
 
 export function displayPreview(entries: WorklogEntry[]): void {
-  console.log('\nПредпросмотр:\n');
+  console.log(`\n${t('display.preview')}\n`);
 
   const maxTaskLen = Math.max(...entries.map(e => (e.task ?? '???').length));
   const maxActivityLen = Math.max(...entries.map(e => e.activity.length), 20);
@@ -10,17 +11,17 @@ export function displayPreview(entries: WorklogEntry[]): void {
     const dateStr = formatDate(entry.date);
     const taskStr = (entry.task ?? '???').padEnd(maxTaskLen);
     const activityStr = entry.activity.padEnd(maxActivityLen);
-    const hoursStr = `${entry.hours}ч`;
+    const hoursStr = `${entry.hours}h`;
 
     console.log(`  ${dateStr}  ${taskStr}  ${activityStr}  ${hoursStr}`);
   }
 
   const total = entries.reduce((sum, e) => sum + e.hours, 0);
-  console.log(`\n  Всего: ${total}ч\n`);
+  console.log(`\n  ${t('display.total')} ${total}h\n`);
 }
 
-export function formatDate(isoDate: string): string {
-  const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+function formatDate(isoDate: string): string {
+  const months = t('display.months').split(',');
   const [yearStr, monthStr, dayStr] = isoDate.split('-');
   const day = parseInt(dayStr, 10);
   const month = months[parseInt(monthStr, 10) - 1];
@@ -28,16 +29,16 @@ export function formatDate(isoDate: string): string {
   return `${day} ${month} ${year}`;
 }
 
-export function displaySuccess(count: number): void {
-  console.log(`\n✓ Залогировано ${count} ${pluralize(count, 'запись', 'записи', 'записей')}\n`);
+function displaySuccess(count: number): void {
+  console.log(`\n\u2713 ${t('display.loggedPrefix')} ${count} ${pluralize(count, t('display.logged.one'), t('display.logged.few'), t('display.logged.many'))}\n`);
 }
 
 export function displayWarning(message: string): void {
-  console.log(`\n⚠️  ${message}\n`);
+  console.log(`\n  ${message}\n`);
 }
 
 export function displayError(message: string): void {
-  console.error(`\n❌ ${message}\n`);
+  console.error(`\n  ${message}\n`);
 }
 
 function pluralize(n: number, one: string, few: string, many: string): string {
@@ -49,7 +50,7 @@ function pluralize(n: number, one: string, few: string, many: string): string {
 export function handleError(error: unknown): never {
   // Ctrl+C during inquirer prompt
   if (error && typeof error === 'object' && 'name' in error && (error as Error).name === 'ExitPromptError') {
-    console.log('\n\nОтменено\n');
+    console.log(`\n\n${t('display.cancelled')}\n`);
     process.exit(0);
   }
 
@@ -58,64 +59,64 @@ export function handleError(error: unknown): never {
   if (error instanceof Error) {
     // VPN/Network errors
     if (error.message.includes('VPN') || error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
-      displayError('Не могу подключиться к Jira');
-      console.error('Проверьте:');
-      console.error('  1. VPN подключен');
-      console.error('  2. URL правильный: jtw setup');
+      displayError(t('error.jiraConnect'));
+      console.error(`${t('setup.checkHints')}`);
+      console.error(`  1. ${t('error.checkVpn')}`);
+      console.error(`  2. ${t('error.checkUrl')}`);
       console.error('');
       process.exit(1);
     }
 
     // Auth errors
     if (error.message.includes('401') || error.message.includes('credentials') || error.message.includes('Invalid credentials')) {
-      displayError('Неверный логин или пароль');
-      console.error('Исправить: jtw setup\n');
+      displayError(t('error.invalidCredentials'));
+      console.error(`${t('error.fixCredentials')}\n`);
       process.exit(1);
     }
 
     // AI errors
     if (error.message.includes('API key') || error.message.includes('api_key')) {
-      displayError('Неверный AI API ключ');
-      console.error('Получить ключ:');
+      displayError(t('error.invalidAiKey'));
+      console.error(`${t('error.getKey')}`);
       console.error('  Anthropic: https://console.anthropic.com/');
       console.error('  OpenAI: https://platform.openai.com/api-keys');
       console.error('');
-      console.error('Настроить: jtw setup\n');
+      console.error(`${t('error.configureSetup')}\n`);
       process.exit(1);
     }
 
     // Rate limit
     if (error.message.includes('rate limit') || error.message.includes('429')) {
-      displayError('Превышен лимит запросов к AI');
-      console.error('Попробуйте через минуту или используйте template:');
+      displayError(t('error.rateLimit'));
+      console.error(`${t('error.rateLimitHint')}`);
       console.error('  jtw t\n');
       process.exit(1);
     }
 
     // Invalid task
     if (error.message.includes('404') || error.message.includes('does not exist')) {
-      displayError('Задача не найдена в Jira');
-      console.error('Проверьте номер задачи и попробуйте снова\n');
+      displayError(t('error.taskNotFound'));
+      console.error(`${t('error.taskNotFoundHint')}\n`);
       process.exit(1);
     }
 
     // Config not found
     if (error.message.includes('config') || error.message.includes('SQLITE_CANTOPEN')) {
-      displayError('Конфигурация не найдена');
-      console.error('Запустите настройку: jtw setup\n');
+      displayError(t('error.configNotFound'));
+      console.error(`${t('error.configNotFoundHint')}\n`);
       process.exit(1);
     }
 
     // Generic error
-    displayError(`Ошибка: ${error.message}`);
+    displayError(`${t('error.generic')} ${error.message}`);
   } else {
-    displayError('Неизвестная ошибка');
+    displayError(t('error.unknown'));
   }
 
-  console.error('Если проблема повторяется:');
-  console.error('  - Проверьте VPN');
-  console.error('  - Откройте Jira в браузере');
-  console.error('  - Проверьте настройки: jtw setup\n');
+  console.error(`${t('error.persistentHint')}`);
+  console.error(`  - ${t('error.checkVpnHint')}`);
+  console.error(`  - ${t('error.openJira')}`);
+  console.error(`  - ${t('error.checkSettings')}\n`);
 
   process.exit(1);
 }
@@ -125,7 +126,7 @@ export function displayProgress(current: number, total: number, item: string): v
 }
 
 export function displayProgressResult(success: boolean): void {
-  console.log(success ? '✓' : '✗');
+  console.log(success ? '\u2713' : '\u2717');
 }
 
 export function displayBatchResult(result: BatchResult): void {
@@ -134,7 +135,7 @@ export function displayBatchResult(result: BatchResult): void {
   }
 
   if (result.failed.length > 0) {
-    console.error(`✗ Не удалось залогировать ${result.failed.length}:\n`);
+    console.error(`\u2717 ${t('display.failedToLog')} ${result.failed.length}:\n`);
     for (const { entry, error } of result.failed) {
       console.error(`  ${entry.task}: ${error}`);
     }

@@ -4,22 +4,23 @@ import { createAIProvider } from '../core/ai';
 import { createJiraClient } from '../core/jira';
 import { handleError, displayPreview, displayBatchResult, displayError, displayWarning } from '../utils/display';
 import { WorklogEntry } from '../types';
+import { t } from '../i18n';
 
 export async function quickCommand(input: string): Promise<void> {
   try {
     const config = store.getConfig();
     if (!config) {
-      displayError('Конфигурация не найдена');
-      console.error('Запустите: jtw setup\n');
+      displayError(t('quick.noConfig'));
+      console.error(`${t('quick.runSetup')}\n`);
       process.exit(1);
     }
 
     // Warn if input looks too short (missing quotes)
     if (input.split(' ').length < 3) {
-      displayWarning('Ваш ввод выглядит слишком коротким.');
-      console.warn('Не забывайте использовать кавычки:');
-      console.warn('  Правильно: jtw q "вчера созвоны 4 часа"');
-      console.warn('  Неправильно: jtw q вчера созвоны 4 часа\n');
+      displayWarning(t('quick.inputTooShort'));
+      console.warn(t('quick.quoteHint'));
+      console.warn(`  ${t('quick.quoteCorrect')}`);
+      console.warn(`  ${t('quick.quoteWrong')}\n`);
     }
 
     // Initialize clients
@@ -31,7 +32,7 @@ export async function quickCommand(input: string): Promise<void> {
     const recentTasks = await jiraClient.getRecentTasks();
 
     // Parse with AI
-    console.log('\nПарсинг через AI...\n');
+    console.log(`\n${t('quick.parsing')}\n`);
     let entries: WorklogEntry[];
     try {
       entries = await aiProvider.parse(input, {
@@ -40,14 +41,14 @@ export async function quickCommand(input: string): Promise<void> {
         recentTasks
       });
     } catch (error: any) {
-      displayError('Не удалось распарсить ввод');
+      displayError(t('quick.parseFailed'));
       console.error(error.message);
-      console.error('\nПопробуйте:');
-      console.error(`  "вчера ${config.projectKey}-123 разработка 3 часа"`);
+      console.error(`\n${t('quick.tryExample')}`);
+      console.error(`  "${t('quick.exampleFull', { project: config.projectKey })}"`);
       if (aliases.length > 0) {
-        console.error('\nИли используйте aliases:');
+        console.error(`\n${t('quick.useAliases')}`);
         for (const alias of aliases.slice(0, 3)) {
-          console.error(`  "сегодня ${alias.keyword} 2 часа"`);
+          console.error(`  "${t('quick.exampleAlias', { alias: alias.keyword })}"`);
         }
       }
       console.error('');
@@ -55,11 +56,11 @@ export async function quickCommand(input: string): Promise<void> {
     }
 
     if (entries.length === 0) {
-      displayError('Не удалось извлечь записи из ввода');
-      console.error('Убедитесь что указали:');
-      console.error('  - Задачу или alias');
-      console.error('  - Время (часы)');
-      console.error('  - Дату (или "сегодня", "вчера")\n');
+      displayError(t('quick.noEntries'));
+      console.error(`${t('quick.checkInput')}`);
+      console.error(`  ${t('quick.checkTask')}`);
+      console.error(`  ${t('quick.checkHours')}`);
+      console.error(`  ${t('quick.checkDate')}\n`);
       process.exit(1);
     }
 
@@ -83,11 +84,11 @@ export async function quickCommand(input: string): Promise<void> {
         {
           type: 'list',
           name: 'selectedTask',
-          message: `Не найдена задача для "${entry.activity}". Выберите:`,
+          message: `${t('quick.noTaskFor')} "${entry.activity}". ${t('quick.selectTask')}`,
           choices: [
-            ...recentChoices.map(t => ({ name: `${t} (недавняя)`, value: t })),
+            ...recentChoices.map(tsk => ({ name: `${tsk} (${t('quick.recent')})`, value: tsk })),
             ...aliasChoices,
-            { name: 'Ввести вручную', value: 'manual' }
+            { name: t('quick.enterManually'), value: 'manual' }
           ]
         }
       ]);
@@ -98,10 +99,10 @@ export async function quickCommand(input: string): Promise<void> {
           {
             type: 'input',
             name: 'manualTask',
-            message: 'Введите задачу:',
+            message: t('quick.enterTask'),
             validate: (input: string) => {
               if (!input.match(/^[A-Z]+-\d+$/)) {
-                return 'Формат: PROJ-123';
+                return t('quick.taskFormat');
               }
               return true;
             }
@@ -120,29 +121,29 @@ export async function quickCommand(input: string): Promise<void> {
         {
           type: 'confirm',
           name: 'saveAlias',
-          message: `Сохранить "${entry.activity}" как alias для ${resolvedTask}?`,
+          message: `${t('quick.saveAsAlias')} ${resolvedTask}?`,
           default: false
         }
       ]);
 
       if (saveAlias) {
         store.saveAlias(entry.activity, resolvedTask);
-        console.log(`✓ Alias сохранён: "${entry.activity}" → ${resolvedTask}\n`);
+        console.log(`\u2713 ${t('quick.aliasSaved')} "${entry.activity}" -> ${resolvedTask}\n`);
       }
     }
 
     // Validate tasks
-    console.log('Проверка задач в Jira...\n');
+    console.log(`${t('quick.validatingTasks')}\n`);
     const taskKeys = entries.map(e => e.task!);
     const validation = await jiraClient.validateTasks(taskKeys);
 
     if (validation.invalid.length > 0) {
-      displayError(`Задачи не найдены: ${validation.invalid.join(', ')}`);
+      displayError(`${t('quick.tasksNotFound')} ${validation.invalid.join(', ')}`);
       process.exit(1);
     }
 
     if (validation.notAssigned.length > 0) {
-      displayWarning(`Задачи не назначены на вас: ${validation.notAssigned.map(t => t.key).join(', ')}`);
+      displayWarning(`${t('quick.tasksNotAssigned')} ${validation.notAssigned.map(tsk => tsk.key).join(', ')}`);
     }
 
     // Show preview
@@ -153,13 +154,13 @@ export async function quickCommand(input: string): Promise<void> {
       {
         type: 'confirm',
         name: 'confirm',
-        message: 'Залогировать?',
+        message: t('quick.confirmLog'),
         default: true
       }
     ]);
 
     if (!confirm) {
-      console.log('\nОтменено\n');
+      console.log(`\n${t('quick.cancelled')}\n`);
       return;
     }
 

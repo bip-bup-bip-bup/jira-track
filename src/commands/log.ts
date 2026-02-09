@@ -5,13 +5,14 @@ import { aliasCommand } from "./alias";
 import { setupCommand } from "./setup";
 import { store } from "../core/store";
 import { handleError, displayWarning } from "../utils/display";
+import { t } from "../i18n";
 
 export async function logCommand(): Promise<void> {
   try {
     const config = store.getConfig();
 
     if (!config) {
-      displayWarning("Конфигурация не найдена");
+      displayWarning(t('log.noConfig'));
       await setupCommand();
       return;
     }
@@ -23,14 +24,14 @@ export async function logCommand(): Promise<void> {
         {
           type: "list",
           name: "action",
-          message: "Что хотите сделать?",
+          message: t('log.menuTitle'),
           choices: [
-            { name: "Быстрый лог (AI)", value: "quick" },
-            { name: "Управление templates", value: "templates" },
-            { name: "Управление aliases", value: "aliases" },
-            { name: "Статистика", value: "stats" },
-            { name: "Настройки", value: "setup" },
-            { name: "← Выход", value: "exit" },
+            { name: t('log.quickLog'), value: "quick" },
+            { name: t('log.manageTemplates'), value: "templates" },
+            { name: t('log.manageAliases'), value: "aliases" },
+            { name: t('log.stats'), value: "stats" },
+            { name: t('log.settings'), value: "setup" },
+            { name: t('log.exit'), value: "exit" },
           ],
         },
       ]);
@@ -41,8 +42,8 @@ export async function logCommand(): Promise<void> {
             {
               type: "input",
               name: "input",
-              message: "Введите текст для парсинга:",
-              validate: (v: string) => v.length > 0 || "Введите текст",
+              message: t('log.enterText'),
+              validate: (v: string) => v.length > 0 || t('log.enterTextValidation'),
             },
           ]);
           await quickCommand(input);
@@ -65,7 +66,7 @@ export async function logCommand(): Promise<void> {
           break;
 
         case "exit":
-          console.log("\nДо свидания!\n");
+          console.log(`\n${t('log.goodbye')}\n`);
           exit = true;
           break;
       }
@@ -79,11 +80,11 @@ async function showStats(): Promise<void> {
   const recentTasks = store.getRecentTasks(10);
 
   if (recentTasks.length === 0) {
-    displayWarning("Нет истории логирования");
+    displayWarning(t('log.noHistory'));
     return;
   }
 
-  console.log("\nПоследние задачи:\n");
+  console.log(`\n${t('log.recentTasks')}\n`);
   for (const task of recentTasks) {
     console.log(`  ${task}`);
   }

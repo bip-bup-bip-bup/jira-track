@@ -7,7 +7,14 @@ import { templateCommand } from "./commands/template";
 import { aliasCommand } from "./commands/alias";
 import { logCommand } from "./commands/log";
 import { store } from "./core/store";
+import { setLang, t } from "./i18n";
 import inquirer from "inquirer";
+
+// Initialize language from config
+const savedConfig = store.getConfig();
+if (savedConfig?.language) {
+  setLang(savedConfig.language);
+}
 
 const program = new Command();
 
@@ -19,7 +26,7 @@ program
 // Setup command
 program
   .command("setup")
-  .description("Настройка конфигурации")
+  .description(t('index.setupDesc'))
   .action(async () => {
     await setupCommand();
   });
@@ -27,7 +34,7 @@ program
 // Quick log command
 program
   .command("q <input>")
-  .description("Быстрый AI лог без подтверждения")
+  .description(t('index.quickDesc'))
   .action(async (input: string) => {
     await quickCommand(input);
   });
@@ -54,27 +61,27 @@ program.action(async () => {
 
   // First-run experience
   if (!config) {
-    console.log("\n👋 Добро пожаловать в JT!\n");
-    console.log("Сначала нужно настроить подключение к Jira.\n");
+    console.log(`\n${t('index.welcome')}\n`);
+    console.log(`${t('index.needSetup')}\n`);
 
     const { proceed } = await inquirer.prompt([
       {
         type: "confirm",
         name: "proceed",
-        message: "Начать настройку?",
+        message: t('index.startSetup'),
         default: true,
       },
     ]);
 
     if (proceed) {
       await setupCommand();
-      console.log("\n✓ Готово! Теперь используйте:\n");
-      console.log("  jtw        - интерактивный режим");
-      console.log('  jtw q "текст" - быстрый AI лог');
-      console.log("  jtw t      - templates");
-      console.log("  jtw a      - aliases\n");
+      console.log(`\n\u2713 ${t('index.setupDone')}\n`);
+      console.log(`  ${t('index.interactive')}`);
+      console.log(`  ${t('index.quickAi')}`);
+      console.log(`  ${t('index.templates')}`);
+      console.log(`  ${t('index.aliases')}\n`);
     } else {
-      console.log("\nЗапустите позже: jtw setup\n");
+      console.log(`\n${t('index.runLater')}\n`);
     }
     return;
   }
