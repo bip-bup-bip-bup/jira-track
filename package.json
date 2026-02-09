@@ -1,0 +1,53 @@
+{
+  "name": "jira-track",
+  "version": "2.0.0",
+  "description": "AI-powered Jira time logging CLI - Minimalist rebuild",
+  "main": "dist/index.js",
+  "bin": {
+    "jt": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "jira",
+    "time-tracking",
+    "cli",
+    "worklog",
+    "ai",
+    "anthropic",
+    "openai"
+  ],
+  "author": "bip-bup-bip-bup <kookladesu@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bip-bup-bip-bup/jt"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.70.0",
+    "better-sqlite3": "^11.0.0",
+    "commander": "^11.1.0",
+    "inquirer": "^9.2.12",
+    "jira.js": "^4.0.0",
+    "openai": "^6.17.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.9",
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.10.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
