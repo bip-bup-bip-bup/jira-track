@@ -1,7 +1,5 @@
 import { Version2Client } from 'jira.js';
-import { JiraConfig, JiraIssue, ValidationResult, WorklogEntry, BatchResult } from '../types';
-import { displayProgress, displayProgressResult } from '../utils/display';
-import { t } from '../i18n';
+import { JiraConfig, JiraIssue, ValidationResult, WorklogEntry, BatchResult, ProgressCallback } from '../types';
 import https from 'https';
 
 export class JiraClient {
@@ -121,28 +119,36 @@ export class JiraClient {
     });
   }
 
-  async logBatch(entries: WorklogEntry[]): Promise<BatchResult> {
-    process.stderr.write(`\n${t('display.logging', { count: String(entries.length) })}\n\n`);
-
+  async logBatch(entries: WorklogEntry[], progress?: ProgressCallback): Promise<BatchResult> {
     const results: BatchResult = {
       success: [],
       failed: []
     };
 
+    if (progress) {
+      progress.onStart(entries.length);
+    }
+
     for (let i = 0; i < entries.length; i++) {
       const entry = entries[i];
-      displayProgress(i + 1, entries.length, entry.task ?? '???');
+      if (progress) {
+        progress.onItem(i + 1, entries.length, entry.task ?? '???');
+      }
 
       try {
         await this.logWorklog(entry);
         results.success.push(entry);
-        displayProgressResult(true);
+        if (progress) {
+          progress.onItemResult(true);
+        }
       } catch (error: any) {
         results.failed.push({
           entry,
           error: error.message || 'Unknown error'
         });
-        displayProgressResult(false);
+        if (progress) {
+          progress.onItemResult(false);
+        }
       }
     }
 

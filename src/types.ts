@@ -77,6 +77,13 @@ export interface BatchResult {
   failed: Array<{ entry: WorklogEntry; error: string }>;
 }
 
+// Progress callback for batch operations
+export interface ProgressCallback {
+  onStart(total: number): void;
+  onItem(current: number, total: number, item: string): void;
+  onItemResult(success: boolean): void;
+}
+
 // History tracking
 export interface HistoryEntry extends WorklogEntry {
   id?: number;

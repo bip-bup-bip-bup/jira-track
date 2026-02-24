@@ -2,6 +2,7 @@ import inquirer from "inquirer";
 import { store } from "../core/store";
 import { WorklogEntry, Template } from "../types";
 import { handleError, displayError } from "../utils/display";
+import { validateTaskKey } from "../utils/validation";
 import { runMenu, MenuItem } from "../utils/menu";
 import { t } from "../i18n";
 
@@ -100,10 +101,7 @@ async function collectEntries(
         name: "task",
         message: t('template.taskKey'),
         default: current?.task,
-        validate: (input: string) => {
-          if (!input.match(/^[A-Z]+-\d+$/)) return t('quick.taskFormat');
-          return true;
-        },
+        validate: (input: string) => validateTaskKey(input, t('quick.taskFormat')),
       },
       {
         type: "input",

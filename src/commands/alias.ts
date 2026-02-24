@@ -2,6 +2,7 @@ import inquirer from 'inquirer';
 import { store } from '../core/store';
 import { Alias } from '../types';
 import { handleError, displayError } from '../utils/display';
+import { validateTaskKey } from '../utils/validation';
 import { runMenu, MenuItem } from '../utils/menu';
 import { t } from '../i18n';
 
@@ -79,10 +80,7 @@ async function collectAliasFields(defaults?: Alias): Promise<{ keyword: string; 
       name: 'task',
       message: t('alias.taskKey'),
       default: defaults?.task,
-      validate: (input: string) => {
-        if (!input.match(/^[A-Z]+-\d+$/)) return t('quick.taskFormat');
-        return true;
-      },
+      validate: (input: string) => validateTaskKey(input, t('quick.taskFormat')),
     },
     {
       type: 'input',
