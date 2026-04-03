@@ -66,6 +66,16 @@ export interface JiraIssue {
   status: string;
 }
 
+export interface RecentTaskSuggestion {
+  key: string;
+  summary: string;
+  status: string;
+  source: 'history' | 'jira' | 'alias';
+  activity?: string;
+  lastUsedAt?: string;
+  usageCount?: number;
+}
+
 export interface ValidationResult {
   valid: JiraIssue[];
   invalid: string[];

@@ -9,9 +9,9 @@ export async function aliasCommand(): Promise<void> {
   try {
     const aliases = store.getAliases();
 
-    const items: MenuItem<Alias>[] = aliases.map((a) => ({
-      label: `${a.keyword} -> ${a.task}${a.description ? ` (${a.description})` : ''}`,
-      value: a,
+    const items: MenuItem<Alias>[] = aliases.map((alias) => ({
+      label: `${alias.keyword} -> ${alias.task}${alias.description ? ` (${alias.description})` : ''}`,
+      value: alias,
     }));
 
     await runMenu({
@@ -19,8 +19,8 @@ export async function aliasCommand(): Promise<void> {
       items,
       emptyMessage: t('alias.noAliases'),
       createFn: () => createAlias(),
-      editFn: (a) => editAlias(a),
-      deleteFn: (a) => deleteAlias(a),
+      editFn: (alias) => editAlias(alias),
+      deleteFn: (alias) => deleteAlias(alias),
     });
   } catch (error) {
     handleError(error);
@@ -36,7 +36,7 @@ async function createAlias(): Promise<void> {
 
   const answers = await collectAliasFields();
   store.saveAlias(answers.keyword, answers.task, answers.description);
-  console.log(`\n\u2713 ${t('alias.saved')} "${answers.keyword}" -> ${answers.task}\n`);
+  console.log(`\n✓ ${t('alias.savedDetailed', { keyword: answers.keyword, task: answers.task })}\n`);
 }
 
 async function editAlias(alias: Alias): Promise<void> {
@@ -46,7 +46,7 @@ async function editAlias(alias: Alias): Promise<void> {
     store.deleteAlias(alias.keyword);
   }
   store.saveAlias(answers.keyword, answers.task, answers.description);
-  console.log(`\n\u2713 ${t('alias.updated')} "${answers.keyword}" -> ${answers.task}\n`);
+  console.log(`\n✓ ${t('alias.updatedDetailed', { keyword: answers.keyword, task: answers.task })}\n`);
 }
 
 async function deleteAlias(alias: Alias): Promise<void> {
@@ -61,7 +61,7 @@ async function deleteAlias(alias: Alias): Promise<void> {
 
   if (confirm) {
     store.deleteAlias(alias.keyword);
-    console.log(`\n\u2713 ${t('alias.deleted')} "${alias.keyword}"\n`);
+    console.log(`\n✓ ${t('alias.deletedDetailed', { keyword: alias.keyword })}\n`);
   }
 }
 
@@ -79,10 +79,8 @@ async function collectAliasFields(defaults?: Alias): Promise<{ keyword: string; 
       name: 'task',
       message: t('alias.taskKey'),
       default: defaults?.task,
-      validate: (input: string) => {
-        if (!input.match(/^[A-Z]+-\d+$/)) return t('quick.taskFormat');
-        return true;
-      },
+      validate: (input: string) => (input.match(/^[A-Z]+-\d+$/) ? true : t('quick.taskFormat')),
+      filter: (input: string) => input.toUpperCase(),
     },
     {
       type: 'input',
@@ -94,7 +92,7 @@ async function collectAliasFields(defaults?: Alias): Promise<{ keyword: string; 
 
   return {
     keyword: answers.keyword,
-    task: answers.task.toUpperCase(),
+    task: answers.task,
     description: answers.description || undefined,
   };
 }

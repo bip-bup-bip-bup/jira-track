@@ -10,7 +10,6 @@ import { store } from "./core/store";
 import { setLang, t } from "./i18n";
 import inquirer from "inquirer";
 
-// Initialize language from config
 const savedConfig = store.getConfig();
 if (savedConfig?.language) {
   setLang(savedConfig.language);
@@ -23,7 +22,6 @@ program
   .description("AI-powered Jira time logging CLI")
   .version("1.0.0");
 
-// Setup command
 program
   .command("setup")
   .description(t('index.setupDesc'))
@@ -31,7 +29,6 @@ program
     await setupCommand();
   });
 
-// Quick log command
 program
   .command("q <input>")
   .description(t('index.quickDesc'))
@@ -39,27 +36,23 @@ program
     await quickCommand(input);
   });
 
-// Template command
 program
   .command("t")
-  .description("Templates")
+  .description(t('index.templatesDesc'))
   .action(async () => {
     await templateCommand();
   });
 
-// Alias command
 program
   .command("a")
-  .description("Aliases")
+  .description(t('index.aliasesDesc'))
   .action(async () => {
     await aliasCommand();
   });
 
-// Default interactive command
 program.action(async () => {
   const config = store.getConfig();
 
-  // First-run experience
   if (!config) {
     console.log(`\n${t('index.welcome')}\n`);
     console.log(`${t('index.needSetup')}\n`);
@@ -75,9 +68,10 @@ program.action(async () => {
 
     if (proceed) {
       await setupCommand();
-      console.log(`\n\u2713 ${t('index.setupDone')}\n`);
+      console.log(`\n✓ ${t('index.setupDone')}\n`);
       console.log(`  ${t('index.interactive')}`);
-      console.log(`  ${t('index.quickAi')}`);
+      console.log(`  ${t('index.quickAiExample1', { project: store.getConfig()?.projectKey || 'PROJ' })}`);
+      console.log(`  ${t('index.quickAiExample2')}`);
       console.log(`  ${t('index.templates')}`);
       console.log(`  ${t('index.aliases')}\n`);
     } else {
@@ -86,7 +80,6 @@ program.action(async () => {
     return;
   }
 
-  // Regular interactive mode
   await logCommand();
 });
 

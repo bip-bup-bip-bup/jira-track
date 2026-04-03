@@ -4,6 +4,16 @@ import { displayProgress, displayProgressResult } from '../utils/display';
 import { t } from '../i18n';
 import https from 'https';
 
+export class JiraConnectionError extends Error {
+  code: 'auth' | 'network' | 'ssl' | 'unknown';
+
+  constructor(code: 'auth' | 'network' | 'ssl' | 'unknown', message: string) {
+    super(message);
+    this.name = 'JiraConnectionError';
+    this.code = code;
+  }
+}
+
 export class JiraClient {
   private client: Version2Client;
   private projectKey: string;
@@ -35,15 +45,15 @@ export class JiraClient {
       return true;
     } catch (error: any) {
       if (error.response?.status === 401) {
-        throw new Error('Invalid credentials');
+        throw new JiraConnectionError('auth', t('setup.connectionAuthError'));
       }
-      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-        throw new Error('Cannot connect. Check VPN connection.');
+      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT' || error.code === 'EHOSTUNREACH') {
+        throw new JiraConnectionError('network', t('setup.connectionNetworkError'));
       }
       if (error.code === 'DEPTH_ZERO_SELF_SIGNED_CERT' || error.code === 'SELF_SIGNED_CERT_IN_CHAIN') {
-        throw new Error('SSL certificate error (should be handled automatically)');
+        throw new JiraConnectionError('ssl', t('setup.connectionSslError'));
       }
-      throw error;
+      throw new JiraConnectionError('unknown', error.message || t('error.unknown'));
     }
   }
 
@@ -150,14 +160,23 @@ export class JiraClient {
   }
 
   async getRecentTasks(limit: number = 10): Promise<string[]> {
+    const issues = await this.getRecentIssues(limit);
+    return issues.map((issue) => issue.key);
+  }
+
+  async getRecentIssues(limit: number = 10): Promise<JiraIssue[]> {
     try {
       const response = await this.client.issueSearch.searchForIssuesUsingJql({
         jql: `project = ${this.projectKey} AND assignee = currentUser() ORDER BY updated DESC`,
         maxResults: limit,
-        fields: ['key']
+        fields: ['summary', 'status']
       });
 
-      return response.issues?.map(i => i.key!) || [];
+      return response.issues?.map((issue) => ({
+        key: issue.key!,
+        summary: issue.fields?.summary || '',
+        status: (issue.fields?.status as any)?.name || '',
+      })) || [];
     } catch (error) {
       return [];
     }

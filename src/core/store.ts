@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import { homedir } from "os";
 import { join } from "path";
 import { mkdirSync, existsSync, chmodSync } from "fs";
-import { Config, Alias, Template, HistoryEntry, WorklogEntry } from "../types";
+import { Config, Alias, Template, HistoryEntry, WorklogEntry, RecentTaskSuggestion } from "../types";
 
 const DB_DIR = join(homedir(), ".jtw");
 const DB_PATH = join(DB_DIR, "data.db");
@@ -43,6 +43,28 @@ interface TemplateRow {
 
 interface TaskRow {
   task: string;
+}
+
+interface RecentTaskRow {
+  task: string;
+  activity: string;
+  logged_at: string;
+  uses: number;
+}
+
+interface HistorySummaryRow {
+  task: string;
+  total_hours: number;
+  uses: number;
+}
+
+interface HistoryEntryRow {
+  task: string;
+  activity: string;
+  hours: number;
+  date: string;
+  logged_at: string;
+  source: 'ai' | 'template' | 'manual' | null;
 }
 
 class Store {
@@ -162,7 +184,7 @@ class Store {
   // Alias methods
   getAliases(): Alias[] {
     const rows = this.db
-      .prepare("SELECT * FROM aliases ORDER BY usage_count DESC")
+      .prepare("SELECT * FROM aliases ORDER BY usage_count DESC, COALESCE(last_used_at, created_at) DESC")
       .all() as AliasRow[];
     return rows.map(mapAliasRow);
   }
@@ -181,6 +203,19 @@ class Store {
       .run(keyword, task, description || null);
   }
 
+  markAliasUsed(keyword: string): void {
+    this.db
+      .prepare(
+        `
+      UPDATE aliases
+      SET usage_count = usage_count + 1,
+          last_used_at = CURRENT_TIMESTAMP
+      WHERE keyword = ?
+    `,
+      )
+      .run(keyword);
+  }
+
   deleteAlias(keyword: string): boolean {
     const result = this.db
       .prepare("DELETE FROM aliases WHERE keyword = ?")
@@ -191,7 +226,7 @@ class Store {
   // Template methods
   getTemplates(): Template[] {
     const rows = this.db
-      .prepare("SELECT * FROM templates ORDER BY usage_count DESC")
+      .prepare("SELECT * FROM templates ORDER BY usage_count DESC, COALESCE(last_used_at, created_at) DESC")
       .all() as TemplateRow[];
     return rows.map(mapTemplateRow);
   }
@@ -206,6 +241,19 @@ class Store {
     `,
       )
       .run(name, JSON.stringify(entries));
+  }
+
+  markTemplateUsed(name: string): void {
+    this.db
+      .prepare(
+        `
+      UPDATE templates
+      SET usage_count = usage_count + 1,
+          last_used_at = CURRENT_TIMESTAMP
+      WHERE name = ?
+    `,
+      )
+      .run(name);
   }
 
   deleteTemplate(name: string): boolean {
@@ -248,6 +296,83 @@ class Store {
       )
       .all(limit) as TaskRow[];
     return rows.map((row) => row.task);
+  }
+
+  getRecentTaskSuggestions(limit: number = 10): RecentTaskSuggestion[] {
+    const rows = this.db
+      .prepare(
+        `
+      SELECT
+        task,
+        activity,
+        MAX(logged_at) AS logged_at,
+        COUNT(*) AS uses
+      FROM history
+      GROUP BY task, activity
+      ORDER BY MAX(logged_at) DESC, COUNT(*) DESC
+      LIMIT ?
+    `,
+      )
+      .all(limit) as RecentTaskRow[];
+
+    return rows.map((row) => ({
+      key: row.task,
+      summary: "",
+      status: "",
+      source: "history",
+      activity: row.activity,
+      lastUsedAt: row.logged_at,
+      usageCount: row.uses,
+    }));
+  }
+
+  getRecentHistory(limit: number = 10): HistoryEntry[] {
+    const rows = this.db
+      .prepare(
+        `
+      SELECT task, activity, hours, date, logged_at, source
+      FROM history
+      ORDER BY logged_at DESC
+      LIMIT ?
+    `,
+      )
+      .all(limit) as HistoryEntryRow[];
+
+    return rows.map((row) => ({
+      task: row.task,
+      activity: row.activity,
+      hours: row.hours,
+      date: row.date,
+      loggedAt: row.logged_at,
+      source: row.source ?? 'manual',
+    }));
+  }
+
+  getTopTasks(limit: number = 5): Array<{ task: string; totalHours: number; uses: number }> {
+    const rows = this.db
+      .prepare(
+        `
+      SELECT task, SUM(hours) AS total_hours, COUNT(*) AS uses
+      FROM history
+      GROUP BY task
+      ORDER BY SUM(hours) DESC, COUNT(*) DESC
+      LIMIT ?
+    `,
+      )
+      .all(limit) as HistorySummaryRow[];
+
+    return rows.map((row) => ({
+      task: row.task,
+      totalHours: row.total_hours,
+      uses: row.uses,
+    }));
+  }
+
+  getTotalLoggedHours(): number {
+    const row = this.db
+      .prepare("SELECT COALESCE(SUM(hours), 0) AS total FROM history")
+      .get() as { total: number };
+    return row.total;
   }
 
 }

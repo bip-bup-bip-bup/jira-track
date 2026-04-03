@@ -17,7 +17,6 @@ export async function logCommand(): Promise<void> {
       return;
     }
 
-    // Main menu loop
     let exit = false;
     while (!exit) {
       const { action } = await inquirer.prompt([
@@ -29,7 +28,7 @@ export async function logCommand(): Promise<void> {
             { name: t('log.quickLog'), value: "quick" },
             { name: t('log.manageTemplates'), value: "templates" },
             { name: t('log.manageAliases'), value: "aliases" },
-            { name: t('log.stats'), value: "stats" },
+            { name: t('log.recentActivity'), value: "stats" },
             { name: t('log.settings'), value: "setup" },
             { name: t('log.exit'), value: "exit" },
           ],
@@ -37,34 +36,30 @@ export async function logCommand(): Promise<void> {
       ]);
 
       switch (action) {
-        case "quick":
+        case "quick": {
           const { input } = await inquirer.prompt([
             {
               type: "input",
               name: "input",
               message: t('log.enterText'),
-              validate: (v: string) => v.length > 0 || t('log.enterTextValidation'),
+              validate: (value: string) => value.length > 0 || t('log.enterTextValidation'),
             },
           ]);
           await quickCommand(input);
           break;
-
+        }
         case "templates":
           await templateCommand();
           break;
-
         case "aliases":
           await aliasCommand();
           break;
-
         case "stats":
           await showStats();
           break;
-
         case "setup":
           await setupCommand();
           break;
-
         case "exit":
           console.log(`\n${t('log.goodbye')}\n`);
           exit = true;
@@ -77,15 +72,24 @@ export async function logCommand(): Promise<void> {
 }
 
 async function showStats(): Promise<void> {
-  const recentTasks = store.getRecentTasks(10);
-
-  if (recentTasks.length === 0) {
+  const recentEntries = store.getRecentHistory(5);
+  if (recentEntries.length === 0) {
     displayWarning(t('log.noHistory'));
     return;
   }
 
-  console.log(`\n${t('log.recentTasks')}\n`);
-  for (const task of recentTasks) {
-    console.log(`  ${task}`);
+  const topTasks = store.getTopTasks(5);
+  const totalHours = store.getTotalLoggedHours();
+
+  console.log(`\n${t('log.recentLogs')}\n`);
+  for (const entry of recentEntries) {
+    console.log(`  ${entry.date}  ${entry.task}  ${entry.activity}  ${entry.hours}h`);
   }
+
+  console.log(`\n${t('log.frequentTasks')}\n`);
+  for (const task of topTasks) {
+    console.log(`  ${task.task}  ${task.totalHours}h  ${task.uses}x`);
+  }
+
+  console.log(`\n${t('log.totalHours')} ${totalHours}h\n`);
 }
